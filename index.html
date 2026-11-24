@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রো অ্যাডমিন প্যানেল — গ্রিন এডিশন</title>
+    <!-- Hind Siliguri Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { 
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-deep: #064E3B;
+            --primary-soft: #ECFDF5;
+            --bg: linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 50%, #DCFCE7 100%);
+            --card: rgba(255, 255, 255, 0.96);    
+            --text: #064E3B;
+            --text-dark: #0F172A;
+            --muted: #64748B;
+            --border: rgba(16, 185, 129, 0.22);
+            --shadow: 0 10px 28px rgba(6, 78, 59, 0.08);
+        }
+
+        * { box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; }
+        body { background: var(--bg); color: var(--text-dark); margin: 0; display: flex; min-height: 100vh; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast Notification */
+        #adminToast { position: fixed; top: 20px; right: 20px; z-index: 9999; background: #064E3B; color: #fff; padding: 13px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; box-shadow: 0 12px 30px rgba(6, 78, 59, 0.28); border-left: 5px solid #34D399; transform: translateX(140%); transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+        #adminToast.show { transform: translateX(0); }
+        #adminToast.error { background: #991B1B; border-left-color: #FCA5A5; }
+
+        /* Sidebar Styles (Green Mode) */
+        .sidebar { width: 270px; height: 100vh; background: linear-gradient(180deg, #064E3B 0%, #065F46 55%, #047857 100%); position: fixed; left: 0; top: 0; z-index: 100; box-shadow: 4px 0 24px rgba(6, 78, 59, 0.18); display: flex; flex-direction: column; color: #fff; }
+        .brand-box { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; gap: 12px; }
+        .brand-icon { width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, #34D399, #10B981); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #064E3B; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+        .brand-box h2 { margin: 0; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.1; }
+        .brand-box small { color: #A7F3D0; font-size: 12px; font-weight: 600; }
+
+        .nav-menu { padding: 14px 12px; flex: 1; overflow-y: auto; }
+        .nav-item { padding: 13px 16px; margin-bottom: 6px; border-radius: 13px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.25s; font-size: 16px; color: #D1FAE5; font-weight: 600; }
+        .nav-item i { width: 22px; text-align: center; font-size: 17px; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .nav-item.active { background: linear-gradient(135deg, #10B981, #34D399); color: #064E3B; font-weight: 700; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35); }
+
+        /* Main Content */
+        .main-content { margin-left: 270px; padding: 26px 28px; width: calc(100% - 270px); min-height: 100vh; }
+
+        /* Overview Stats Bar */
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--card); padding: 16px 18px; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px; animation: fadeIn 0.35s ease; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--primary-soft); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(16, 185, 129, 0.25); flex-shrink: 0; }
+        .stat-info small { display: block; color: var(--muted); font-size: 13px; font-weight: 600; }
+        .stat-info strong { font-size: 24px; color: var(--primary-deep); font-weight: 700; line-height: 1.2; }
+
+        /* Cards & Forms */
+        .card { background: var(--card); padding: 24px; border-radius: 20px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .card h3 { margin: 0 0 18px; color: var(--primary-deep); border-bottom: 2px solid #ECFDF5; padding-bottom: 12px; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .card h3 i { color: var(--primary); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+        label { display: block; margin-bottom: 7px; color: #065F46; font-size: 14.5px; font-weight: 700; }
+        
+        input, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #BBF7D0; border-radius: 12px; font-family: 'Hind Siliguri'; font-size: 15px; outline: none; background: #F0FDF4; color: var(--text-dark); font-weight: 500; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: var(--primary-dark); background: #fff; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14); }
+        textarea { resize: vertical; min-height: 90px; }
+
+        .highlight-box { background: #ECFDF5; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #6EE7B7; }
+        .notice-admin-box { grid-column: 1 / -1; background: linear-gradient(135deg, #ECFDF5, #D1FAE5); padding: 16px; border-radius: 16px; border: 1.5px dashed #10B981; }
+        .notice-hint { margin: 6px 0 0; font-size: 12.5px; color: #065F46; font-weight: 600; }
+
+        button { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; border: none; padding: 11px 20px; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: 'Hind Siliguri'; font-size: 15.5px; margin-top: 12px; transition: 0.2s; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.24); display: inline-flex; align-items: center; gap: 7px; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(5, 150, 105, 0.32); }
+        button:active { transform: scale(0.97); }
+        
+        button.edit { background: linear-gradient(135deg, #F59E0B, #D97706) !important; color: #fff !important; font-size: 13.5px; padding: 7px 13px; margin-top: 0; box-shadow: none; }
+        button.delete { background: linear-gradient(135deg, #EF4444, #DC2626) !important; color: #fff !important; font-size: 13.5px; padding: 7px 13px; margin-top: 0; box-shadow: none; }
+        button.success { background: linear-gradient(135deg, #10B981, #059669) !important; color: #fff !important; font-size: 13.5px; padding: 7px 13px; margin-top: 0; box-shadow: none; }
+        button.secondary { background: #64748B !important; color: #fff !important; box-shadow: none; }
+        button.save-sm { font-size: 13.5px; padding: 7px 14px; margin-top: 0; }
+
+        /* Tables */
+        .table-wrap { width: 100%; overflow-x: auto; border-radius: 14px; border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; background: #fff; min-width: 580px; }
+        th, td { padding: 13px 14px; text-align: left; border-bottom: 1px solid #F1F5F9; font-size: 14.5px; }
+        th { background: #ECFDF5; color: var(--primary-deep); font-weight: 700; }
+        tr:hover td { background: #F8FAFC; }
+
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12.5px; font-weight: 700; display: inline-block; }
+        .অপেক্ষমান { background: #FEF3C7; color: #B45309; }
+        .SUCCESS { background: #DCFCE7; color: #15803D; }
+        .বাতিল { background: #FEE2E2; color: #B91C1C; }
+
+        .search-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; max-width: 380px; }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.35s ease; }
+        
+        /* List Items */
+        .list-item { background: #F8FAFC; padding: 14px 16px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; border: 1px solid #E2E8F0; flex-wrap: wrap; }
+        .item-info { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+        .item-info img.thumb-sq { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; border: 1.5px solid #BBF7D0; flex-shrink: 0; }
+        .item-info img.thumb-yt { width: 120px; aspect-ratio: 16 / 9; border-radius: 10px; object-fit: cover; border: 1.5px solid #6EE7B7; flex-shrink: 0; background: #D1FAE5; }
+        .item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        /* Slider Live Preview Box */
+        .slider-preview-box { margin-top: 14px; max-width: 340px; display: none; }
+        .slider-preview-box p { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #065F46; }
+        .slider-preview-box img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; border: 2px solid var(--primary); box-shadow: 0 8px 20px rgba(6, 78, 59, 0.15); }
+        .url-pill { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 20px; background: #D1FAE5; color: #065F46; }
+        .url-pill.nolink { background: #E2E8F0; color: #475569; }
+
+        /* Responsive Mobile Mode */
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { position: sticky; top: 0; width: 100%; height: auto; box-shadow: 0 6px 18px rgba(6, 78, 59, 0.16); }
+            .brand-box { padding: 14px 16px; }
+            .brand-box h2 { font-size: 19px; }
+            .nav-menu { display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto; scrollbar-width: none; }
+            .nav-menu::-webkit-scrollbar { display: none; }
+            .nav-item { margin-bottom: 0; padding: 9px 14px; white-space: nowrap; font-size: 14px; }
+            .main-content { margin-left: 0; width: 100%; padding: 18px 14px; }
+            .card { padding: 18px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="adminToast"><i id="toastIcon" class="fa-solid fa-circle-check"></i><span id="toastText"></span></div>
+
+<div class="sidebar">
+    <div class="brand-box">
+        <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div>
+            <h2>Green Admin</h2>
+            <small>মাল্টি-কয়েন কন্ট্রোল</small>
+        </div>
+    </div>
+    <div class="nav-menu">
+        <div class="nav-item active" onclick="showTab('settings', this)"><i class="fa-solid fa-gear"></i> অ্যাপ সেটিংস</div>
+        <div class="nav-item" onclick="showTab('sliders', this)"><i class="fa-solid fa-images"></i> স্লাইডার (YT)</div>
+        <div class="nav-item" onclick="showTab('users', this)"><i class="fa-solid fa-users"></i> ইউজার লিস্ট</div>
+        <div class="nav-item" onclick="showTab('withdrawals', this)"><i class="fa-solid fa-wallet"></i> উত্তোলন অনুরোধ</div>
+        <div class="nav-item" onclick="showTab('tasks', this)"><i class="fa-solid fa-list-check"></i> টাস্ক ম্যানেজমেন্ট</div>
+        <div class="nav-item" onclick="showTab('payments', this)"><i class="fa-solid fa-credit-card"></i> পেমেন্ট মেথড</div>
+    </div>
+</div>
+
+<div class="main-content">
+    <!-- Live Summary Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-info"><small>মোট ইউজার</small><strong id="statTotalUsers">0</strong></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div class="stat-info"><small>অপেক্ষমান উত্তোলন</small><strong id="statPendingW">0</strong></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-list-check"></i></div>
+            <div class="stat-info"><small>সক্রিয় টাস্ক</small><strong id="statTotalTasks">0</strong></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-images"></i></div>
+            <div class="stat-info"><small>সক্রিয় স্লাইডার</small><strong id="statTotalSliders">0</strong></div>
+        </div>
+    </div>
+
+    <!-- App Settings -->
+    <div id="settings" class="tab-panel active">
+        <div class="card">
+            <h3><i class="fa-solid fa-sliders"></i> অ্যাপ কনফিগারেশন ও নোটিফিকেশন</h3>
+            <div class="grid">
+                <!-- Notification Bar Description Field -->
+                <div class="notice-admin-box">
+                    <label><i class="fa-solid fa-bullhorn"></i> ইউজার নোটিফিকেশন বার / ডেসক্রিপশন</label>
+                    <textarea id="conf_notice" placeholder="এখানে নোটিশ বা ডেসক্রিপশন লিখুন... (ইউজার অ্যাপের কয়েনের নিচের গ্রিন নোটিশ বারে সরাসরি দেখাবে)"></textarea>
+                    <p class="notice-hint">টিপস: ফাঁকা রেখে সেভ করলে ইউজার অ্যাপ থেকে নোটিফিকেশন বার লুকানো থাকবে।</p>
+                </div>
+
+                <div><label>কয়েন এর নাম</label><input type="text" id="conf_coinName" placeholder="টাকা / Coin"></div>
+                <div><label>কয়েন লোগো (URL)</label><input type="text" id="conf_coinLogo" placeholder="https://..."></div>
+                <div><label>মানিট্যাগ জোন আইডি</label><input type="text" id="conf_monetagId"></div>
+                <div><label>বট ইউজারনেম (@ ছাড়া)</label><input type="text" id="conf_botUsername" placeholder="ExampleBot"></div>
+                <div><label>প্রতি বিজ্ঞাপনে বোনাস</label><input type="number" step="any" id="conf_adReward"></div>
+                <div><label>দৈনিক বিজ্ঞাপন লিমিট</label><input type="number" id="conf_adLimit"></div>
+                <div><label>পার রেফার বোনাস</label><input type="number" step="any" id="conf_referBonus"></div>
+                
+                <div class="highlight-box">
+                    <label>উইথড্র করতে মোট অ্যাড দেখা লাগবে</label>
+                    <input type="number" id="conf_minAdsToWithdraw" placeholder="যেমন: ৮০">
+                </div>
+                <div class="highlight-box">
+                    <label>উইথড্র করতে মিনিমাম রেফার লাগবে</label>
+                    <input type="number" id="conf_minRefToWithdraw" placeholder="যেমন: ৫">
+                </div>
+                <div class="highlight-box">
+                    <label>রেফার কোড আনলক করতে অ্যাড দেখা লাগবে</label>
+                    <input type="number" id="conf_minAdsToUnlockRefer" placeholder="যেমন: ২০">
+                </div>
+            </div>
+            <button onclick="saveAppSettings()"><i class="fa-solid fa-floppy-disk"></i> সব সেটিংস আপডেট করুন</button>
+        </div>
+    </div>
+
+    <!-- Slider Management (New - 16:9 YouTube Size) -->
+    <div id="sliders" class="tab-panel">
+        <div class="card">
+            <h3 id="sliderFormTitle"><i class="fa-solid fa-images"></i> নতুন স্লাইডার যোগ করুন (16:9 YT Size)</h3>
+            <div class="grid">
+                <div>
+                    <label>স্লাইডার ছবির লিঙ্ক (Image URL) *</label>
+                    <input type="text" id="slider_image" placeholder="https://example.com/banner.jpg" oninput="previewSliderImg(this.value)">
+                </div>
+                <div>
+                    <label>ছবিতে ক্লিক করলে যে লিংকে যাবে (অপশনাল)</label>
+                    <input type="text" id="slider_url" placeholder="ফাঁকা রাখলে ক্লিক করলে কোথাও যাবে না">
+                </div>
+            </div>
+            <div class="slider-preview-box" id="sliderPreviewBox">
+                <p>লাইভ ১৬:৯ প্রিভিউ:</p>
+                <img id="sliderPreviewImg" src="" alt="Preview" onerror="document.getElementById('sliderPreviewBox').style.display='none'">
+            </div>
+            <input type="hidden" id="editingSliderId">
+            <button id="sliderSubmitBtn" onclick="addSlider()"><i class="fa-solid fa-plus"></i> স্লাইডার যোগ করুন</button>
+            <button id="sliderCancelBtn" class="secondary" style="display:none;" onclick="resetSliderForm()">বাতিল</button>
+        </div>
+        <div class="card">
+            <h3><i class="fa-solid fa-photo-film"></i> চলমান স্লাইডারসমূহ</h3>
+            <div id="activeSliderList"></div>
+        </div>
+    </div>
+
+    <!-- User Management -->
+    <div id="users" class="tab-panel">
+        <div class="card">
+            <h3><i class="fa-solid fa-users"></i> ইউজার ম্যানেজমেন্ট</h3>
+            <div class="search-row">
+                <input type="text" id="userSearchInput" placeholder="নাম বা ইউজার আইডি দিয়ে খুঁজুন..." oninput="filterUsers()">
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>টেলিগ্রাম নাম / আইডি</th>
+                            <th>ব্যালেন্স</th>
+                            <th>মোট অ্যাড</th>
+                            <th>রেফার সংখ্যা</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdrawal Requests -->
+    <div id="withdrawals" class="tab-panel">
+        <div class="card">
+            <h3><i class="fa-solid fa-wallet"></i> উত্তোলন অনুরোধসমূহ</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ইউজার</th>
+                            <th>পরিমাণ</th>
+                            <th>মেথড</th>
+                            <th>নম্বর/বিস্তারিত</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Management -->
+    <div id="tasks" class="tab-panel">
+        <div class="card">
+            <h3 id="taskFormTitle"><i class="fa-solid fa-list-check"></i> নতুন টাস্ক যোগ করুন</h3>
+            <div class="grid">
+                <div><label>টাস্ক টাইটেল</label><input type="text" id="task_title"></div>
+                <div><label>রিওয়ার্ড পয়েন্ট</label><input type="number" step="any" id="task_reward"></div>
+                <div><label>টাস্ক লিঙ্ক</label><input type="text" id="task_url"></div>
+                <div><label>আইকন লিঙ্ক (URL)</label><input type="text" id="task_image"></div>
+            </div>
+            <input type="hidden" id="editingTaskId">
+            <button id="taskSubmitBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i> টাস্ক সেভ করুন</button>
+            <button id="taskCancelBtn" class="secondary" style="display:none;" onclick="resetTaskForm()">বাতিল</button>
+        </div>
+        <div class="card"><h3><i class="fa-solid fa-bars-progress"></i> চলমান টাস্কসমূহ</h3><div id="activeTaskList"></div></div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div id="payments" class="tab-panel">
+        <div class="card">
+            <h3 id="pmFormTitle"><i class="fa-solid fa-credit-card"></i> নতুন পেমেন্ট মেথড</h3>
+            <div class="grid">
+                <div><label>মেথড নাম</label><input type="text" id="pm_name"></div>
+                <div><label>আইকন লিঙ্ক (URL)</label><input type="text" id="pm_icon"></div>
+                <div><label>হিন্ট (Account/Number)</label><input type="text" id="pm_hint"></div>
+                <div><label>সর্বনিম্ন উত্তোলন</label><input type="number" step="any" id="pm_min"></div>
+                <div><label>সর্বোচ্চ উত্তোলন</label><input type="number" step="any" id="pm_max"></div>
+            </div>
+            <input type="hidden" id="editingPmId">
+            <button id="pmSubmitBtn" onclick="addPaymentMethod()"><i class="fa-solid fa-plus"></i> মেথড যোগ করুন</button>
+            <button id="pmCancelBtn" class="secondary" style="display:none;" onclick="resetPmForm()">বাতিল</button>
+        </div>
+        <div class="card"><h3><i class="fa-solid fa-circle-check"></i> একটিভ মেথডসমূহ</h3><div id="paymentMethodList"></div></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD0wckZG5iou29lRTDnIJMzclkV69bRIRQ",
+      authDomain: "takacoin-a4d83.firebaseapp.com",
+      projectId: "takacoin-a4d83",
+      storageBucket: "takacoin-a4d83.firebasestorage.app",
+      messagingSenderId: "236834519109",
+      appId: "1:236834519109:web:8cf037b8eb048011338b2c"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    let allUsersCache = [];
+    let toastTimer = null;
+
+    function showToast(msg, isError = false) {
+        const box = document.getElementById('adminToast');
+        const icon = document.getElementById('toastIcon');
+        const text = document.getElementById('toastText');
+        box.className = isError ? 'error show' : 'show';
+        icon.className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+        text.innerText = msg;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { box.classList.remove('show'); }, 3000);
+    }
+
+    window.showTab = (id, el) => {
+        document.querySelectorAll('.tab-panel').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); 
+        el.classList.add('active');
+    };
+
+    window.previewSliderImg = (url) => {
+        const box = document.getElementById('sliderPreviewBox');
+        const img = document.getElementById('sliderPreviewImg');
+        if (url && url.trim().startsWith('http')) {
+            img.src = url.trim();
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    };
+
+    async function loadSettings() {
+        const snap = await getDoc(doc(db, "settings", "app"));
+        if(snap.exists()){
+            const d = snap.data();
+            document.getElementById('conf_notice').value = d.notice ?? d.notification ?? d.description ?? "";
+            document.getElementById('conf_coinName').value = d.coinName || "";
+            document.getElementById('conf_coinLogo').value = d.coinLogo || "";
+            document.getElementById('conf_monetagId').value = d.monetagId || "";
+            document.getElementById('conf_botUsername').value = d.botUsername || "";
+            document.getElementById('conf_adLimit').value = d.adLimit || 0;
+            document.getElementById('conf_adReward').value = d.adReward || 0;
+            document.getElementById('conf_referBonus').value = d.referBonus || 0;
+            document.getElementById('conf_minAdsToWithdraw').value = d.minAdsToWithdraw || 0;
+            document.getElementById('conf_minRefToWithdraw').value = d.minRefToWithdraw || 0;
+            document.getElementById('conf_minAdsToUnlockRefer').value = d.minAdsToUnlockRefer || 0;
+        }
+    }
+
+    window.saveAppSettings = async () => {
+        await setDoc(doc(db, "settings", "app"), {
+            notice: document.getElementById('conf_notice').value.trim(),
+            coinName: document.getElementById('conf_coinName').value,
+            coinLogo: document.getElementById('conf_coinLogo').value,
+            monetagId: document.getElementById('conf_monetagId').value,
+            botUsername: document.getElementById('conf_botUsername').value,
+            adLimit: parseInt(document.getElementById('conf_adLimit').value) || 0,
+            adReward: parseFloat(document.getElementById('conf_adReward').value) || 0,
+            referBonus: parseFloat(document.getElementById('conf_referBonus').value) || 0,
+            minAdsToWithdraw: parseInt(document.getElementById('conf_minAdsToWithdraw').value) || 0,
+            minRefToWithdraw: parseInt(document.getElementById('conf_minRefToWithdraw').value) || 0,
+            minAdsToUnlockRefer: parseInt(document.getElementById('conf_minAdsToUnlockRefer').value) || 0
+        }, { merge: true }); 
+        showToast("সব সেটিংস সফলভাবে আপডেট হয়েছে!");
+    };
+
+    function renderUsersList(listData) {
+        const list = document.getElementById('userList');
+        list.innerHTML = "";
+        listData.forEach(item => {
+            const u = item.data;
+            let telegramName = u.name || u.firstName || u.first_name || u.username || ("ID: " + item.id);
+            list.innerHTML += `<tr>
+                <td><strong>${telegramName}</strong><br><small style="color:#059669; font-weight:600;">ID: ${u.userId || u.uid || item.id}</small></td>
+                <td><input type="number" step="any" id="bal_${item.id}" value="${u.balance || 0}" style="width:95px; padding:6px 10px;"></td>
+                <td>${u.adStats?.total || 0}</td>
+                <td>${u.referCount || 0}</td>
+                <td><button class="save-sm" onclick="updateBalance('${item.id}')">সেভ</button></td>
+            </tr>`;
+        });
+    }
+
+    window.filterUsers = () => {
+        const q = document.getElementById('userSearchInput').value.trim().toLowerCase();
+        if (!q) return renderUsersList(allUsersCache);
+        const filtered = allUsersCache.filter(item => {
+            const u = item.data;
+            const name = (u.name || u.firstName || u.username || "").toLowerCase();
+            const uid = String(u.userId || u.uid || item.id).toLowerCase();
+            return name.includes(q) || uid.includes(q);
+        });
+        renderUsersList(filtered);
+    };
+
+    function loadDynamicData() {
+        // Users
+        onSnapshot(collection(db, "users"), snap => {
+            allUsersCache = [];
+            snap.forEach(uDoc => {
+                allUsersCache.push({ id: uDoc.id, data: uDoc.data() });
+            });
+            document.getElementById('statTotalUsers').innerText = allUsersCache.length;
+            filterUsers();
+        });
+
+        // Sliders
+        onSnapshot(collection(db, "sliders"), snap => {
+            const list = document.getElementById('activeSliderList');
+            list.innerHTML = "";
+            document.getElementById('statTotalSliders').innerText = snap.size;
+            if (snap.empty) {
+                list.innerHTML = `<p style="color:#64748B; text-align:center; margin:10px 0;">এখনো কোনো স্লাইডার যোগ করা হয়নি।</p>`;
+                return;
+            }
+            snap.forEach(sDoc => {
+                const s = sDoc.data();
+                const hasUrl = s.url && s.url.trim() !== "";
+                list.innerHTML += `<div class="list-item">
+                    <div class="item-info">
+                        <img class="thumb-yt" src="${s.image}" onerror="this.src='https://via.placeholder.com/320x180?text=Invalid+Image'">
+                        <div>
+                            <div style="font-weight:700; color:#064E3B; font-size:14px; word-break:break-all;">${hasUrl ? s.url : 'শুধু ইমেজ (লিংক নেই)'}</div>
+                            <span class="url-pill ${hasUrl ? '' : 'nolink'}">${hasUrl ? 'ক্লিকেবল লিংক যুক্ত' : 'নন-ক্লিকেবল'}</span>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="edit" onclick="editSlider('${sDoc.id}')">এডিট</button>
+                        <button class="delete" onclick="deleteDocById('sliders','${sDoc.id}')">ডিলিট</button>
+                    </div>
+                </div>`;
+            });
+        });
+
+        // Withdrawals
+        onSnapshot(collection(db, "withdrawals"), snap => {
+            const list = document.getElementById('withdrawList'); list.innerHTML = "";
+            let pendingCount = 0;
+            snap.forEach(wDoc => {
+                const w = wDoc.data();
+                if (w.status === "অপেক্ষমান") pendingCount++;
+                list.innerHTML += `<tr>
+                    <td><strong>${w.name}</strong></td>
+                    <td><strong>${w.amount}</strong></td>
+                    <td>${w.method}</td>
+                    <td>${w.account}</td>
+                    <td><span class="status-badge ${w.status}">${w.status}</span></td>
+                    <td style="display:flex; gap:6px;">
+                        <button class="success" title="অনুমোদন" onclick="updateWStatus('${wDoc.id}', 'SUCCESS')"><i class="fa-solid fa-check"></i></button>
+                        <button class="edit" title="বাতিল" onclick="updateWStatus('${wDoc.id}', 'বাতিল')"><i class="fa-solid fa-xmark"></i></button>
+                        <button class="delete" title="ডিলিট" onclick="deleteDocById('withdrawals','${wDoc.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('statPendingW').innerText = pendingCount;
+        });
+
+        // Tasks
+        onSnapshot(collection(db, "tasks"), snap => {
+            const list = document.getElementById('activeTaskList'); list.innerHTML = "";
+            document.getElementById('statTotalTasks').innerText = snap.size;
+            snap.forEach(tDoc => {
+                const t = tDoc.data();
+                list.innerHTML += `<div class="list-item">
+                    <div class="item-info">
+                        <img class="thumb-sq" src="${t.image}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2098/2098402.png'">
+                        <span><strong>${t.title}</strong> (${t.reward} Pts)</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="edit" onclick="editTask('${tDoc.id}')">এডিট</button>
+                        <button class="delete" onclick="deleteDocById('tasks','${tDoc.id}')">ডিলিট</button>
+                    </div>
+                </div>`;
+            });
+        });
+
+        // Payment Methods
+        onSnapshot(collection(db, "paymentMethods"), snap => {
+            const list = document.getElementById('paymentMethodList'); list.innerHTML = "";
+            snap.forEach(pDoc => {
+                const p = pDoc.data();
+                list.innerHTML += `<div class="list-item">
+                    <div class="item-info">
+                        <img class="thumb-sq" src="${p.icon}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/10149/10149458.png'">
+                        <span><strong>${p.name}</strong> (${p.min}-${p.max})</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="edit" onclick="editPM('${pDoc.id}')">এডিট</button>
+                        <button class="delete" onclick="deleteDocById('paymentMethods','${pDoc.id}')">ডিলিট</button>
+                    </div>
+                </div>`;
+            });
+        });
+    }
+
+    window.updateBalance = async (uid) => {
+        const bal = parseFloat(document.getElementById('bal_'+uid).value);
+        if (isNaN(bal)) return showToast("সঠিক ব্যালেন্স লিখুন!", true);
+        await updateDoc(doc(db, "users", uid), { balance: bal });
+        showToast("ব্যালেন্স আপডেট হয়েছে!");
+    };
+
+    window.updateWStatus = async (id, status) => {
+        await updateDoc(doc(db, "withdrawals", id), { status: status });
+        showToast("স্ট্যাটাস আপডেট হয়েছে!");
+    };
+
+    window.deleteDocById = async (coll, id) => {
+        if(confirm("আপনি কি এটি ডিলিট করতে চান?")) {
+            await deleteDoc(doc(db, coll, id));
+            showToast("ডিলিট সম্পন্ন হয়েছে!");
+        }
+    };
+
+    // Slider CRUD
+    window.addSlider = async () => {
+        const image = document.getElementById('slider_image').value.trim();
+        const url = document.getElementById('slider_url').value.trim();
+        const editId = document.getElementById('editingSliderId').value;
+
+        if (!image) return showToast("স্লাইডার ছবির লিঙ্ক দিন!", true);
+
+        if (editId) {
+            await updateDoc(doc(db, "sliders", editId), { image, url });
+            showToast("স্লাইডার আপডেট হয়েছে!");
+        } else {
+            await addDoc(collection(db, "sliders"), { image, url, createdAt: Date.now() });
+            showToast("নতুন স্লাইডার যোগ হয়েছে!");
+        }
+        resetSliderForm();
+    };
+
+    window.editSlider = async (id) => {
+        const snap = await getDoc(doc(db, "sliders", id));
+        if (snap.exists()) {
+            const s = snap.data();
+            document.getElementById('slider_image').value = s.image || "";
+            document.getElementById('slider_url').value = s.url || "";
+            document.getElementById('editingSliderId').value = id;
+            document.getElementById('sliderFormTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> স্লাইডার এডিট করুন`;
+            document.getElementById('sliderSubmitBtn').innerHTML = `<i class="fa-solid fa-check"></i> আপডেট করুন`;
+            document.getElementById('sliderCancelBtn').style.display = "inline-flex";
+            previewSliderImg(s.image || "");
+        }
+    };
+
+    window.resetSliderForm = () => {
+        document.getElementById('slider_image').value = "";
+        document.getElementById('slider_url').value = "";
+        document.getElementById('editingSliderId').value = "";
+        document.getElementById('sliderFormTitle').innerHTML = `<i class="fa-solid fa-images"></i> নতুন স্লাইডার যোগ করুন (16:9 YT Size)`;
+        document.getElementById('sliderSubmitBtn').innerHTML = `<i class="fa-solid fa-plus"></i> স্লাইডার যোগ করুন`;
+        document.getElementById('sliderCancelBtn').style.display = "none";
+        document.getElementById('sliderPreviewBox').style.display = "none";
+    };
+
+    window.addTask = async () => {
+        const title = document.getElementById('task_title').value.trim();
+        const reward = parseFloat(document.getElementById('task_reward').value);
+        const url = document.getElementById('task_url').value.trim();
+        const image = document.getElementById('task_image').value.trim();
+        const editId = document.getElementById('editingTaskId').value;
+        if (!title || isNaN(reward)) return showToast("সঠিক টাস্ক তথ্য দিন!", true);
+        if(editId) {
+            await updateDoc(doc(db, "tasks", editId), { title, reward, url, image });
+            showToast("টাস্ক আপডেট হয়েছে!");
+        } else {
+            const id = "t_" + Date.now();
+            await setDoc(doc(db, "tasks", id), { id, title, reward, url, image });
+            showToast("টাস্ক সেভ হয়েছে!");
+        }
+        resetTaskForm();
+    };
+
+    window.addPaymentMethod = async () => {
+        const name = document.getElementById('pm_name').value.trim();
+        const icon = document.getElementById('pm_icon').value.trim();
+        const inputHint = document.getElementById('pm_hint').value.trim();
+        const min = parseFloat(document.getElementById('pm_min').value);
+        const max = parseFloat(document.getElementById('pm_max').value);
+        const editId = document.getElementById('editingPmId').value;
+        if (!name || isNaN(min) || isNaN(max)) return showToast("সঠিক পেমেন্ট মেথড তথ্য দিন!", true);
+        if(editId) {
+            await updateDoc(doc(db, "paymentMethods", editId), { name, icon, inputHint, min, max });
+            showToast("পেমেন্ট মেথড আপডেট হয়েছে!");
+        } else {
+            await addDoc(collection(db, "paymentMethods"), { name, icon, inputHint, min, max });
+            showToast("পেমেন্ট মেথড যোগ হয়েছে!");
+        }
+        resetPmForm();
+    };
+
+    window.editTask = async (id) => {
+        const snap = await getDoc(doc(db, "tasks", id));
+        if(snap.exists()) {
+            const t = snap.data();
+            document.getElementById('task_title').value = t.title;
+            document.getElementById('task_reward').value = t.reward;
+            document.getElementById('task_url').value = t.url;
+            document.getElementById('task_image').value = t.image;
+            document.getElementById('editingTaskId').value = id;
+            document.getElementById('taskSubmitBtn').innerHTML = `<i class="fa-solid fa-check"></i> আপডেট করুন`;
+            document.getElementById('taskCancelBtn').style.display = "inline-flex";
+        }
+    };
+    window.resetTaskForm = () => { 
+        document.getElementById('task_title').value = "";
+        document.getElementById('task_reward').value = "";
+        document.getElementById('task_url').value = "";
+        document.getElementById('task_image').value = "";
+        document.getElementById('editingTaskId').value = "";
+        document.getElementById('taskSubmitBtn').innerHTML = `<i class="fa-solid fa-plus"></i> টাস্ক সেভ করুন`;
+        document.getElementById('taskCancelBtn').style.display = "none";
+    };
+    
+    window.editPM = async (id) => {
+        const snap = await getDoc(doc(db, "paymentMethods", id));
+        if(snap.exists()) {
+            const p = snap.data();
+            document.getElementById('pm_name').value = p.name;
+            document.getElementById('pm_icon').value = p.icon;
+            document.getElementById('pm_hint').value = p.inputHint;
+            document.getElementById('pm_min').value = p.min;
+            document.getElementById('pm_max').value = p.max;
+            document.getElementById('editingPmId').value = id;
+            document.getElementById('pmSubmitBtn').innerHTML = `<i class="fa-solid fa-check"></i> আপডেট করুন`;
+            document.getElementById('pmCancelBtn').style.display = "inline-flex";
+        }
+    };
+    window.resetPmForm = () => { 
+        document.getElementById('pm_name').value = "";
+        document.getElementById('pm_icon').value = "";
+        document.getElementById('pm_hint').value = "";
+        document.getElementById('pm_min').value = "";
+        document.getElementById('pm_max').value = "";
+        document.getElementById('editingPmId').value = "";
+        document.getElementById('pmSubmitBtn').innerHTML = `<i class="fa-solid fa-plus"></i> মেথড যোগ করুন`;
+        document.getElementById('pmCancelBtn').style.display = "none";
+    };
+
+    loadSettings(); loadDynamicData();
+</script>
+</body>
+</html>
